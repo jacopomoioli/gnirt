@@ -33,7 +33,7 @@ int print(char* buffer){
 }
 
 
-int main(){
+int main(int argc, char **argv){
     int minimum_readable_length = 10;
     int file_descriptor;
     struct stat file_status;
@@ -42,14 +42,14 @@ int main(){
     int string_length;
     char readable_string_buffer[2048];
     
-    file_descriptor = open("./gnirt", O_RDONLY);
+    file_descriptor = open(argv[1], O_RDONLY);
     if (file_descriptor < 0) {
-        print("Error while opening the file. Quitting\n");
+        print("Error while opening the file. Quitting");
         return -1;
     }
     
     if(fstat(file_descriptor, &file_status) != 0) {
-        print("Error while fetching the length of the file. Quitting\n");
+        print("Error while fetching the length of the file. Quitting");
         return -1;
     }
     
@@ -59,7 +59,7 @@ int main(){
     
     read_bytes = read(file_descriptor, buf, file_size);
     if(read_bytes < 0){
-        print("Error while reading file. Quitting\n");
+        print("Error while reading file. Quitting");
     }
 
     
