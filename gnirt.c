@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <stdio.h>
+
 int is_printable(char character){
     if(((int)character >= 32 && (int)character <= 126) || (int)character == 9){
         return 1;
@@ -34,13 +36,18 @@ int print(char* buffer){
 
 
 int main(int argc, char **argv){
-    int minimum_readable_length = 10;
+    int minimum_readable_length = 5;
     int file_descriptor;
     struct stat file_status;
     long long int file_size;
     ssize_t read_bytes;
     int string_length;
     char readable_string_buffer[2048];
+
+    if(argc < 2){
+        print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
+        return 0;
+    }
     
     file_descriptor = open(argv[1], O_RDONLY);
     if (file_descriptor < 0) {
