@@ -3,7 +3,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <stdio.h>
+#include <stdlib.h>
+
 
 int is_printable(char character){
     if(((int)character >= 32 && (int)character <= 126) || (int)character == 9){
@@ -47,6 +48,10 @@ int main(int argc, char **argv){
     if(argc < 2){
         print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
         return 0;
+    }
+
+    if(argc == 3){
+        minimum_readable_length = atoi(argv[2]);
     }
     
     file_descriptor = open(argv[1], O_RDONLY);
