@@ -3,8 +3,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <stdlib.h>
 
+int atoi(char *input){
+    int iterator = 0;
+    int number = 0;
+    int digit = 0;
+    while(input[iterator]!='\0'){
+        digit = input[iterator] - 48;
+        number = (number*10)+digit;
+        iterator++;
+    }
+    return number;
+}
 
 int is_printable(char character){
     if(((int)character >= 32 && (int)character <= 126) || (int)character == 9){
@@ -37,7 +47,7 @@ int print(char* buffer){
 
 
 int main(int argc, char **argv){
-    int minimum_readable_length = 5;
+    int minimum_readable_length = 500;
     int file_descriptor;
     struct stat file_status;
     long long int file_size;
