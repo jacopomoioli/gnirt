@@ -48,12 +48,13 @@ int print(char* buffer){
 
 int main(int argc, char **argv){
     int minimum_readable_length = 500;
+    int string_buffer_size = 2048;
     int file_descriptor;
     struct stat file_status;
     long long int file_size;
     ssize_t read_bytes;
     int string_length;
-    char readable_string_buffer[2048];
+    char readable_string_buffer[string_buffer_size];
 
     if(argc < 2){
         print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
@@ -92,16 +93,26 @@ int main(int argc, char **argv){
             string_length++;
         }else{
             if (string_length > 0){
-                string_length++;
                 readable_string_buffer[string_length] = '\0';
                 if (string_length >= minimum_readable_length){
                     print(readable_string_buffer);
                 }
-                clean_buffer(readable_string_buffer, sizeof(readable_string_buffer));
+                clean_buffer(readable_string_buffer, string_buffer_size);
                 string_length = 0;
             }
         }
     }
+
+    /* Pseudocode for on the fly reading (no need to know file size before reading -> no need for stat)
+        string_length = 0;
+        while read(fd, buf, 4096) > 0:
+            for char in buf:
+                if char is readable:
+                    readable_string_buffer[string_length] = char
+                    string_length++
+                else:
+                    string_length = 0
+     */
 
     return 0;
 }
