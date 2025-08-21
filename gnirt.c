@@ -87,6 +87,7 @@ int main(int argc, char **argv){
         return -1;
     }
     
+    // on-the-fly file read and string recognition loop
     string_length = 0;
     read_bytes = read(file_descriptor, buf, chunk_size);
     while (read_bytes > 0){
