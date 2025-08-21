@@ -16,5 +16,7 @@ Because of inline assembly, only Apple Silicon devices are supported.
 
 ## FAQs
 
-- Is this yet another version of GNU strings? yes, but I did it
-- Why "gnirt"? because is a reversed substring of "strings" and I liked the way it sounded
+- Is this yet another version of GNU strings? - yes, but I did it
+- Why "gnirt"? - because is a reversed substring of "strings" and I liked the way it sounded
+- Does it make sense to use this? - no, it's just a challenge to write a functioning program with a sort of sense while trying to reinvent the wheel by implementing commonly used library function
+- So it's just a playground for YOU? you creep! - ...
