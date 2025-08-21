@@ -1,8 +1,24 @@
-// Badass Libraries
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
+int open(const char *path, int flags, int mode){
+    int result;
+
+    asm volatile (
+        "mov x16, #5\n"     // system call 5 = open() in macos
+        "mov x0, %1\n"      // first mapped value (pointer to path string) in register x0. It's a pointer, so use x (64 bit register) 
+        "mov w1, %w2\n"      // flag in w1 (w is for 32bit registers, w0 is the lower half of x0)
+        "mov w2, %w3\n"      // mode in w2
+        "svc #0\n"       // interrupt to call the kernel, same of int 0x80 in linux x86
+        "mov %w0, w0\n"      // put return value (saved in x0 by the kernel) into mapped var result (%0)
+        : "=r" (result)                         // output operands 
+        : "r" (path), "r" (flags), "r" (mode)    // input operands
+        : "x0", "w1", "w2", "x16"               // clobbered registers
+    );
+
+    // FIXME: there's something wrong with the return code if the syscall fails. I need to investigate more.
+
+    return result;
+}
 
 int atoi(char *input){
     int iterator = 0;
@@ -50,11 +66,11 @@ int main(int argc, char **argv){
     int minimum_readable_length = 500;
     int string_buffer_size = 2048;
     int file_descriptor;
-    struct stat file_status;
-    long long int file_size;
     ssize_t read_bytes;
     int string_length;
     char readable_string_buffer[string_buffer_size];
+    int chunk_size = 4096;
+    char buf[chunk_size];
 
     if(argc < 2){
         print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
@@ -65,54 +81,38 @@ int main(int argc, char **argv){
         minimum_readable_length = atoi(argv[2]);
     }
     
-    file_descriptor = open(argv[1], O_RDONLY);
+    file_descriptor = open(argv[1], 0, 0);
     if (file_descriptor < 0) {
         print("Error while opening the file. Quitting");
         return -1;
     }
     
-    if(fstat(file_descriptor, &file_status) != 0) {
-        print("Error while fetching the length of the file. Quitting");
-        return -1;
-    }
-    
-    file_size = file_status.st_size;
-    
-    char buf[file_size];
-    
-    read_bytes = read(file_descriptor, buf, file_size);
-    if(read_bytes < 0){
-        print("Error while reading file. Quitting");
-    }
-
-    
     string_length = 0;
-    for(int i=0; i<read_bytes; i++){
-        if (is_printable(buf[i])){
-            readable_string_buffer[string_length] = buf[i];
-            string_length++;
-        }else{
-            if (string_length > 0){
-                readable_string_buffer[string_length] = '\0';
-                if (string_length >= minimum_readable_length){
-                    print(readable_string_buffer);
+    read_bytes = read(file_descriptor, buf, chunk_size);
+    while (read_bytes > 0){
+        for(int i=0; i<read_bytes; i++){
+            if (is_printable(buf[i])){
+                readable_string_buffer[string_length] = buf[i];
+                string_length++;
+            }else{
+                if (string_length > 0){
+                    readable_string_buffer[string_length] = '\0';
+                    if (string_length >= minimum_readable_length){
+                        print(readable_string_buffer);
+                    }
+                    clean_buffer(readable_string_buffer, string_buffer_size);
+                    string_length = 0;
                 }
-                clean_buffer(readable_string_buffer, string_buffer_size);
-                string_length = 0;
             }
         }
-    }
+        read_bytes = read(file_descriptor, buf, chunk_size);
 
-    /* Pseudocode for on the fly reading (no need to know file size before reading -> no need for stat)
-        string_length = 0;
-        while read(fd, buf, 4096) > 0:
-            for char in buf:
-                if char is readable:
-                    readable_string_buffer[string_length] = char
-                    string_length++
-                else:
-                    string_length = 0
-     */
+        // edge case, but to avoid that if the file ends with a printable string, i add a "fake" terminator at the end
+        if(read_bytes == 0 && string_length > 0){   
+            read_bytes = 1;
+            buf[0] = '\0';
+        }
+    }
 
     return 0;
 }
