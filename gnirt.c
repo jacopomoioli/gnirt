@@ -1,57 +1,36 @@
-int open(const char *path, int flags, int mode){
+/**
+ * gnirt
+ * An educational clone of GNU strings with no includes
+ */
+
+int syscall(long number, long arg1, long arg2, long arg3){
     int result;
-
+    
     asm volatile (
-        "mov x16, #5\n"     // system call 5 = open() in macos (see https://github.com/opensource-apple/xnu/blob/master/bsd/kern/syscalls.master for all others syscalls index)
-        "mov x0, %1\n"      // first mapped value (pointer to path string) in register x0. It's a pointer, so use x (64 bit register) 
-        "mov w1, %w2\n"      // flag in w1 (w is for 32bit registers, w0 is the lower half of x0)
-        "mov w2, %w3\n"      // mode in w2
-        "svc #0\n"       // interrupt to call the kernel, same of int 0x80 in linux x86
-        "mov %w0, w0\n"      // put return value (saved in x0 by the kernel) into mapped var result (%0)
-        : "=r" (result)                         // output operands 
-        : "r" (path), "r" (flags), "r" (mode)    // input operands
-        : "x0", "w1", "w2", "x16"               // clobbered registers
+        "mov x16, %1\n"     // (see https://github.com/opensource-apple/xnu/blob/master/bsd/kern/syscalls.master for all others syscalls index)
+        "mov x0, %2\n"
+        "mov x1, %3\n"
+        "mov x2, %4\n"
+        "svc #0\n"
+        "mov %w0, w0\n" 
+        : "=r" (result)
+        : "r" (number), "r" (arg1), "r" (arg2), "r" (arg3)
+        : "x0", "x1", "x2", "x16"
     );
-
-    // FIXME: there's something wrong with the return code if the syscall fails. I need to investigate more.
-
+    
     return result;
+}
+
+int open(const char *path, int flags, int mode){
+    return syscall(5, (long)path, flags, mode);
 }
 
 int read(int file_descriptor, void *buffer, int bytes){
-    int result;
-
-    asm volatile (
-        "mov x16, #3\n"
-        "mov w0, %w1\n"
-        "mov x1, %2\n"
-        "mov w2, %w3\n"
-        "svc #0\n"
-        "mov %w0, w0\n" 
-        : "=r" (result)
-        : "r" (file_descriptor), "r" (buffer), "r" (bytes)
-        : "x0", "w1", "w2", "x16"
-    );
-
-    return result;
+    return syscall(3, file_descriptor, (long)buffer, bytes);
 }
 
 int write(int file_descriptor, void *buffer, int bytes){
-    int result;
-
-    asm volatile (
-        "mov x16, #4\n"
-        "mov w0, %w1\n"
-        "mov x1, %2\n"
-        "mov w2, %w3\n"
-        "svc #0\n"
-        "mov %w0, w0\n" 
-        : "=r" (result)
-        : "r" (file_descriptor), "r" (buffer), "r" (bytes)
-        : "x0", "w1", "w2", "x16"
-    );
-
-    return result;
+    return syscall(4, file_descriptor, (long)buffer, bytes);
 }
 
 int atoi(char *input){

@@ -1,11 +1,11 @@
 # gnirt
-An educational clone of GNU strings with no usermode dependency.
+An educational clone of GNU strings with no includes.
 
 No real reason to use this, just an educational project to learn by reinventing the wheel and going low level-ish. Also, it's full of bugs.
 
 At the moment it only works on apple silicon based systems, due to inline assembly.
 
-## Removed libraries
+## Removed includes
 - stdio.h → Replaced with a custom `print()` using the raw write syscall.
 - string.h → Replaced `memset()` with my own `clean_buffer()`.
 - ctype.h → Replaced `isprint()` with my own `is_printable()`.
