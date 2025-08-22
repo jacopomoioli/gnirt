@@ -1,6 +1,8 @@
 # gnirt
 An educational clone of GNU strings with no usermode dependency.
+
 No real reason to use this, just an educational project to learn by reinventing the wheel and going low level-ish. Also, it's full of bugs.
+
 At the moment it only works on apple silicon based systems, due to inline assembly.
 
 ## Removed libraries
