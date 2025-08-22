@@ -1,10 +1,8 @@
-#include <unistd.h>
-
 int open(const char *path, int flags, int mode){
     int result;
 
     asm volatile (
-        "mov x16, #5\n"     // system call 5 = open() in macos
+        "mov x16, #5\n"     // system call 5 = open() in macos (see https://github.com/opensource-apple/xnu/blob/master/bsd/kern/syscalls.master for all others syscalls index)
         "mov x0, %1\n"      // first mapped value (pointer to path string) in register x0. It's a pointer, so use x (64 bit register) 
         "mov w1, %w2\n"      // flag in w1 (w is for 32bit registers, w0 is the lower half of x0)
         "mov w2, %w3\n"      // mode in w2
@@ -16,6 +14,42 @@ int open(const char *path, int flags, int mode){
     );
 
     // FIXME: there's something wrong with the return code if the syscall fails. I need to investigate more.
+
+    return result;
+}
+
+int read(int file_descriptor, void *buffer, int bytes){
+    int result;
+
+    asm volatile (
+        "mov x16, #3\n"
+        "mov w0, %w1\n"
+        "mov x1, %2\n"
+        "mov w2, %w3\n"
+        "svc #0\n"
+        "mov %w0, w0\n" 
+        : "=r" (result)
+        : "r" (file_descriptor), "r" (buffer), "r" (bytes)
+        : "x0", "w1", "w2", "x16"
+    );
+
+    return result;
+}
+
+int write(int file_descriptor, void *buffer, int bytes){
+    int result;
+
+    asm volatile (
+        "mov x16, #4\n"
+        "mov w0, %w1\n"
+        "mov x1, %2\n"
+        "mov w2, %w3\n"
+        "svc #0\n"
+        "mov %w0, w0\n" 
+        : "=r" (result)
+        : "r" (file_descriptor), "r" (buffer), "r" (bytes)
+        : "x0", "w1", "w2", "x16"
+    );
 
     return result;
 }
@@ -56,8 +90,8 @@ int clean_buffer(char* buffer, int length){
 }
 
 int print(char* buffer){
-    write(STDOUT_FILENO, buffer, length(buffer));
-    write(STDOUT_FILENO, "\n", 1);
+    write(0, buffer, length(buffer));
+    write(0, "\n", 1);
     return 0;
 }
 
@@ -66,7 +100,7 @@ int main(int argc, char **argv){
     int minimum_readable_length = 500;
     int string_buffer_size = 2048;
     int file_descriptor;
-    ssize_t read_bytes;
+    int read_bytes;
     int string_length;
     char readable_string_buffer[string_buffer_size];
     int chunk_size = 4096;

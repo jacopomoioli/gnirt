@@ -55,4 +55,4 @@ dkms.conf
 *.dwo
 
 # Vscode
-.vscode
+.vscode/
