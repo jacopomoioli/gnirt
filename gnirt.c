@@ -3,7 +3,31 @@
  * An educational clone of GNU strings with no includes
  */
 
-int syscall(long number, long arg1, long arg2, long arg3){
+
+enum platform {
+    MACOS_ARM64,
+    LINUX_X64
+};
+
+static enum platform current_platform = -1;
+
+void get_platform(){
+    #ifdef __APPLE__
+        #ifdef __aarch64__
+            current_platform = MACOS_ARM64;
+        #endif
+    #elif __linux__
+        #ifdef __x86_64__
+            current_platform = LINUX_X64;
+        #endif
+    #endif
+}
+
+int linux_x64_syscall(){
+    return 0;
+}
+
+int macos_arm64_syscall(long number, long arg1, long arg2, long arg3){
     int result;
     
     asm volatile (
@@ -22,15 +46,30 @@ int syscall(long number, long arg1, long arg2, long arg3){
 }
 
 int open(const char *path, int flags, int mode){
-    return syscall(5, (long)path, flags, mode);
+    switch(current_platform){
+        case MACOS_ARM64:
+            return macos_arm64_syscall(5, (long)path, flags, mode);
+        case LINUX_X64:
+            return linux_x64_syscall();
+    }
 }
 
 int read(int file_descriptor, void *buffer, int bytes){
-    return syscall(3, file_descriptor, (long)buffer, bytes);
+    switch(current_platform){
+        case MACOS_ARM64:
+            return macos_arm64_syscall(3, file_descriptor, (long)buffer, bytes);
+        case LINUX_X64:
+            return linux_x64_syscall();
+    }
 }
 
 int write(int file_descriptor, void *buffer, int bytes){
-    return syscall(4, file_descriptor, (long)buffer, bytes);
+    switch(current_platform){
+        case MACOS_ARM64:
+            return macos_arm64_syscall(4, file_descriptor, (long)buffer, bytes);
+        case LINUX_X64:
+            return linux_x64_syscall();
+    }
 }
 
 int atoi(char *input){
@@ -75,8 +114,9 @@ int print(char* buffer){
 }
 
 
+
 int main(int argc, char **argv){
-    int minimum_readable_length = 500;
+    int minimum_readable_length = 5;
     int string_buffer_size = 2048;
     int file_descriptor;
     int read_bytes;
@@ -84,6 +124,8 @@ int main(int argc, char **argv){
     char readable_string_buffer[string_buffer_size];
     int chunk_size = 4096;
     char buf[chunk_size];
+
+    get_platform();
 
     if(argc < 2){
         print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
