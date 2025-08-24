@@ -4,72 +4,81 @@
  */
 
 
-enum platform {
-    MACOS_ARM64,
-    LINUX_X64
-};
+#ifdef __APPLE__
+    #ifdef __aarch64__
+        int macos_arm64_syscall(long number, long arg1, long arg2, long arg3){
+            int result;
+            
+            asm volatile (
+                "mov x16, %1\n"     // (see https://github.com/opensource-apple/xnu/blob/master/bsd/kern/syscalls.master for all others syscalls index)
+                "mov x0, %2\n"
+                "mov x1, %3\n"
+                "mov x2, %4\n"
+                "svc #0\n"
+                "mov %w0, w0\n" 
+                : "=r" (result)
+                : "r" (number), "r" (arg1), "r" (arg2), "r" (arg3)
+                : "x0", "x1", "x2", "x16"
+            );
+            
+            return result;
+        }
+    #endif
+#elif __linux__
+    #ifdef __x86_64__
+        int linux_x64_syscall(long number, long arg1, long arg2, long arg3){
+            long result;
 
-static enum platform current_platform = -1;
+            asm volatile (
+                "movq %1, %%rax\n"     // https://filippo.io/linux-syscall-table/
+                "movq  %2, %%rdi\n"
+                "movq  %3, %%rsi\n"
+                "movq  %4, %%rdx\n"
+                "syscall\n"
+                "movq %%rax, %0\n"
+                : "=r" (result)
+                : "r" (number), "r" (arg1), "r" (arg2), "r" (arg3)
+                : "rax", "rdi", "rsi", "rdx"
+            );
+            return (int)result;
+        }
+    #endif
+#endif
 
-void get_platform(){
+int open(const char *path, int flags, int mode){
     #ifdef __APPLE__
         #ifdef __aarch64__
-            current_platform = MACOS_ARM64;
+            return macos_arm64_syscall(5, (long)path, flags, mode);
         #endif
     #elif __linux__
         #ifdef __x86_64__
-            current_platform = LINUX_X64;
+            return linux_x64_syscall(2, (long)path, flags, mode); 
         #endif
     #endif
 }
 
-int linux_x64_syscall(){
-    return 0;
-}
-
-int macos_arm64_syscall(long number, long arg1, long arg2, long arg3){
-    int result;
-    
-    asm volatile (
-        "mov x16, %1\n"     // (see https://github.com/opensource-apple/xnu/blob/master/bsd/kern/syscalls.master for all others syscalls index)
-        "mov x0, %2\n"
-        "mov x1, %3\n"
-        "mov x2, %4\n"
-        "svc #0\n"
-        "mov %w0, w0\n" 
-        : "=r" (result)
-        : "r" (number), "r" (arg1), "r" (arg2), "r" (arg3)
-        : "x0", "x1", "x2", "x16"
-    );
-    
-    return result;
-}
-
-int open(const char *path, int flags, int mode){
-    switch(current_platform){
-        case MACOS_ARM64:
-            return macos_arm64_syscall(5, (long)path, flags, mode);
-        case LINUX_X64:
-            return linux_x64_syscall();
-    }
-}
-
 int read(int file_descriptor, void *buffer, int bytes){
-    switch(current_platform){
-        case MACOS_ARM64:
+    #ifdef __APPLE__
+        #ifdef __aarch64__
             return macos_arm64_syscall(3, file_descriptor, (long)buffer, bytes);
-        case LINUX_X64:
-            return linux_x64_syscall();
-    }
+        #endif
+    #elif __linux__
+        #ifdef __x86_64__
+            return linux_x64_syscall(0, file_descriptor, (long)buffer, bytes); 
+        #endif
+    #endif
 }
 
 int write(int file_descriptor, void *buffer, int bytes){
-    switch(current_platform){
-        case MACOS_ARM64:
+    #ifdef __APPLE__
+        #ifdef __aarch64__
             return macos_arm64_syscall(4, file_descriptor, (long)buffer, bytes);
-        case LINUX_X64:
-            return linux_x64_syscall();
-    }
+        #endif
+    #elif __linux__
+        #ifdef __x86_64__
+            return linux_x64_syscall(1, file_descriptor, (long)buffer, bytes); 
+        #endif
+    #endif
 }
 
 int atoi(char *input){
@@ -124,8 +133,6 @@ int main(int argc, char **argv){
     char readable_string_buffer[string_buffer_size];
     int chunk_size = 4096;
     char buf[chunk_size];
-
-    get_platform();
 
     if(argc < 2){
         print("Usage: gnirt <path to file> [minimum length of printable string. default=5]");
