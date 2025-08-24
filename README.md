@@ -3,7 +3,9 @@ An educational clone of GNU strings with no includes.
 
 No real reason to use this, just an educational project to learn by reinventing the wheel and going low level-ish. Also, it's full of bugs.
 
-At the moment it only works on apple silicon based systems, due to inline assembly.
+Supported platforms
+- MacOS on aarch64
+- Linux on x86_64
 
 ## Removed includes
 - stdio.h → Replaced with a custom `print()` using the raw write syscall.
