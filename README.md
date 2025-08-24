@@ -7,6 +7,22 @@ Supported platforms
 - MacOS on aarch64
 - Linux on x86_64
 
+## Building
+### MacOS 
+```
+cc gnirt.c -o gnirt
+```
+
+### Linux
+```
+gcc gnirt.c -o gnirt
+```
+
+## Usage
+```
+gnirt <path to input file> [minimum length of printable string]
+```
+
 ## Removed includes
 - stdio.h → Replaced with a custom `print()` using the raw write syscall.
 - string.h → Replaced `memset()` with my own `clean_buffer()`.
