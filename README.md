@@ -3,6 +3,8 @@ An educational clone of GNU strings with no includes.
 
 No real reason to use this, just an educational project to learn by reinventing the wheel and going low level-ish. Also, it's full of bugs.
 
+If you want to know more about why and how I wrote this, check out the post on my blog: [Introducing Gnirt](https://jacopomoioli.com/posts/introducing_gnirt/).
+
 Supported platforms
 - MacOS on aarch64
 - Linux on x86_64
