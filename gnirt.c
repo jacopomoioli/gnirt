@@ -117,11 +117,10 @@ int clean_buffer(char* buffer, int length){
 }
 
 int print(char* buffer){
-    write(0, buffer, length(buffer));
-    write(0, "\n", 1);
+    write(1, buffer, length(buffer));
+    write(1, "\n", 1);
     return 0;
 }
-
 
 
 int main(int argc, char **argv){
